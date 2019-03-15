@@ -1,0 +1,63 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    rabbitmq_host: 'localhost'
+    rabbitmq_user: 'guest'
+    rabbitmq_password: 'guest'
+    rabbit_mq_port: 5672
+    rabbitmq_my_project_vhost: 'symfony'
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as sphpervices
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/*'
+        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+
+    # controllers are imported separately to make sure services can be injected
+    # as action arguments even if you don't extend any base controller class
+    App\Controller\:
+        resource: '../src/Controller'
+        tags: ['controller.service_arguments']
+
+
+    entity_service:
+        class: App\Service\EntityService
+
+    OldSound\RabbitMqBundle\RabbitMq\ProducerInterface:
+        '@old_sound_rabbit_mq.entity_create_producer'
+
+
+    OldSound\RabbitMqBundle\RabbitMq\ConsumerInterface:
+        '@old_sound_rabbit_mq.entity_create_consumer'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+old_sound_rabbit_mq:
+    connections:
+        default:
+            host: '%rabbitmq_host%'
+            user: '%rabbitmq_user%'
+            password: '%rabbitmq_password%'
+            vhost: '%rabbitmq_my_project_vhost%'
+    producers:
+        entity_create:
+            connection: default
+            exchange_options:
+                name: entities
+                type: direct
+    consumers:
+        entity_create:
+            connection:       default
+            exchange_options: {name: 'entities', type: direct}
+            queue_options:    {name: 'entities'}
+            callback:         entity_service
