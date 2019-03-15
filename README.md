@@ -1,6 +1,4 @@
 
-## AppLike Task
-
 ## API Endpoints
 
     * `Post http://127.0.0.1:8000/produceEntity`
@@ -13,7 +11,7 @@
         * Param {id:integer}
    
             
-##Fetch data from Queue
+## Fetch data from Queue
   `php bin/console  rabbitmq:consumer -m 10 entity_create`          
  
 ## Tools Used
